@@ -19,7 +19,25 @@ from .registry import register
 
 INDEX = "https://index.commoncrawl.org/{crawl}-index"
 DATA = "https://data.commoncrawl.org/"
-DEFAULT_CRAWL = os.environ.get("LAPIS_CC_CRAWL", "CC-MAIN-2026-33")
+COLLINFO = "https://index.commoncrawl.org/collinfo.json"
+_FALLBACK_CRAWL = "CC-MAIN-2026-34"
+
+
+def _resolve_crawl() -> str:
+    """LAPIS_CC_CRAWL if set, else the newest published crawl (crawls aren't
+    weekly, so a hardcoded id goes stale and 404s). Falls back to a known id."""
+    env = os.environ.get("LAPIS_CC_CRAWL")
+    if env:
+        return env
+    r = http_get(COLLINFO)
+    if r is not None:
+        try:
+            return r.json()[0]["id"]
+        except Exception:
+            pass
+    return _FALLBACK_CRAWL
+
+
 DEFAULT_PATTERNS = os.environ.get(
     "LAPIS_CC_PATTERNS", "*.wikiservice.at/*,prowiki.org/*").split(",")
 
@@ -46,7 +64,7 @@ class CommonCrawlCollector(Collector):
     requires_active = False   # passive: CC infra, not third-party origins
 
     def iter_candidates(self, since=None, limit=100) -> Iterator[Candidate]:
-        crawl = DEFAULT_CRAWL
+        crawl = _resolve_crawl()
         n = 0
         for pattern in DEFAULT_PATTERNS:
             pattern = pattern.strip()

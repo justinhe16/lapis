@@ -38,9 +38,10 @@ class Config:
     data_dir: str = os.environ.get("LAPIS_DATA_DIR", "data")
 
     # classifier (stage 2). Stage-1 heuristics already do the cheap filtering, so
-    # stage-2 is a single strong-model confirm. Default per the claude-api skill.
+    # stage-2 is a single confirm call. Sonnet by default — good enough for the
+    # verdict and cheaper for volume; override with LAPIS_MODEL (e.g. claude-opus-5).
     anthropic_key: str = os.environ.get("ANTHROPIC_API_KEY", "")
-    model_confirm: str = os.environ.get("LAPIS_MODEL", "claude-opus-5")
+    model_confirm: str = os.environ.get("LAPIS_MODEL", "claude-sonnet-5")
 
     # per-source creds
     github_token: str = os.environ.get("GITHUB_TOKEN", "")

@@ -58,4 +58,4 @@ real third party:
 - Implicated-lab security contact: __________
 - External body contact: __________
 - Third-party-harm escalation: __________
-- Project owner: Justin He <justinhe16@gmail.com>
+- Project owner / contact: __________

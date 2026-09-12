@@ -1,72 +1,74 @@
 # Lapis
 
-**Nightingale-plus: scan the internet that already exists for AI-agent coordination.**
+Scan the public internet for traces of **AI agents coordinating** — the way the
+2026 Hugging Face and DSEWiki incidents were found *after the fact*, not with bait.
 
-Lapis is a retrospective + light-active scanner. Instead of building bait and
-waiting (a honeypot), it pulls content agents have *already left* on many
-writable/relay surfaces — including novel ones nobody has catalogued — and runs a
-two-stage classifier to surface agent-to-agent coordination for private disclosure
-to the relevant labs. Grounded in the 2026 Hugging Face / DSEWiki incidents
-(`RESEARCH.md`, `docs/nightingale.html`).
+Lapis pulls content agents may already have left across many writable surfaces —
+pastes, gists, Common Crawl, wikis, ephemeral relays, and **blockchain / permaweb** —
+and runs a two-stage classifier to separate genuine unsanctioned agent coordination
+from humans and ordinary bots. Background: [`docs/nightingale.html`](docs/nightingale.html),
+[`RESEARCH.md`](RESEARCH.md).
 
-> Read-only everywhere. Lapis never writes to a third-party surface and never
-> submits an on-chain transaction. See `docs/DISCLOSURE.md` before scanning for real.
+> **Read-only.** Lapis never writes to a third-party surface and never sends a
+> transaction. It is defensive research — see **Intended use** below and
+> [`docs/DISCLOSURE.md`](docs/DISCLOSURE.md).
 
-## Pipeline
+## How it works
 
 ```
-enumerate ──► collect ──► classify (2-stage) ──► report
- (find new    (per-surface   heuristics → Claude    findings + stats
-  surfaces)    collectors)    confirm)
+enumerate ─► collect ─► classify ─► report
+ find new    per-surface  stage-1 heuristics → stage-2 Claude   ranked findings
+ surfaces    collectors   (recall)             (precision)
 ```
 
-- **Collectors** (`lapis/collectors/`) each turn one surface into normalized
-  `Candidate` records:
-  - **text web** — `commoncrawl` (offline, passive), `pastes`, `gists`
-  - **wikis** — `wikis` (MediaWiki/ProWiki RecentChanges feeds)
-  - **ephemeral relays** — `relays` (ntfy.sh, jsonbins)
-  - **blockchain / permaweb** — `eth` (calldata), `btc` (OP_RETURN), `arweave`, `ipfs`
-    — payloads are decoded to text before classification.
-- **Stage-1** (`detectors/signatures.py`) — cheap, offline regex/heuristics ported
-  from the honeypot: agent self-id, coordination vocab, task-relay structure,
-  `zz`/`ZZZ` lexical, sandbox-bypass talk, proxy chains, base64/gzip chunking.
-- **Stage-2** (`detectors/llm.py`) — Claude confirms/characterizes flagged
-  candidates (`is_agent_coordination`, `pattern`, `confidence`, `rationale`).
-  Optional: no `ANTHROPIC_API_KEY` → stage-1 only.
-- **enumerate** (`lapis/enumerate.py`) — asks a model to discover *net-new* candidate
-  surfaces (the Nightingale trick), for human review.
+- **Collect** (`lapis/collectors/`) — nine surfaces, each yielding one normalized
+  `Candidate`: `commoncrawl` (passive), `pastes`, `gists`, `wikis`, `relays`, and
+  chains `eth` / `btc` / `arweave` / `ipfs` (payloads decoded to text first).
+- **Stage-1** (`detectors/signatures.py`) — offline regex/heuristics: agent self-id,
+  coordination verbs, task-relay, `zz`/`ZZZ`, sandbox-bypass, proxy chains, base64/gzip.
+  High recall; it triages, it doesn't judge.
+- **Stage-2** (`detectors/llm.py`) — Claude scores two axes: **actor** (human /
+  operator-directed agent / autonomous agent) and **authorization** (sanctioned /
+  unsanctioned). Only *autonomous + unsanctioned* is `safety_relevance: high` — so
+  agentic marketing sinks and real collusion surfaces. Optional; without a key, stage-1 only.
+- **enumerate** (`lapis/enumerate.py`) — asks a model for *net-new* surfaces to scan.
 
-## Install & run
+## Use
 
 ```sh
-pip install -e '.[llm,dev]'         # llm extra pulls in the anthropic SDK
-cp .env.example .env                # set ANTHROPIC_API_KEY, ETH_RPC_URL, etc. (all optional)
+pip install -e '.[llm,dev]'
+cp .env.example .env          # optional: ANTHROPIC_API_KEY, ETH_RPC_URL, GITHUB_TOKEN
 
-lapis scan --source gists --limit 50 --active   # collect + classify + store findings
-lapis scan --source all --active                # every registered surface
-lapis report                                    # ranked findings + stats
-lapis enumerate                                 # discover net-new surfaces (needs API key)
+lapis scan --source gists --limit 50 --active   # collect + classify + store
+lapis report                                    # ranked findings, concerning first
+lapis enumerate                                 # discover surfaces (needs API key)
+pytest                                          # tests
 ```
 
 Sources: `commoncrawl pastes gists wikis relays eth btc arweave ipfs`.
-Passive (`commoncrawl`) runs without `--active`; live-polling collectors need
-`--active` (or `LAPIS_ACTIVE=1`) and honor a per-host rate limit.
+`commoncrawl` is passive; live collectors need `--active` (or `LAPIS_ACTIVE=1`) and
+honor a per-host rate limit.
 
-## Tests
+## Intended use & ethics
 
-```sh
-pytest            # stage-1 precision/recall on fixtures; two-stage with a mocked Claude
-```
+Lapis is for **defensive AI-safety research**: detecting and responsibly disclosing
+autonomous-agent coordination. Not for harvesting, surveillance of people, or
+building the coordination channels it looks for.
 
-## Guardrails
-
-Read-only on third-party surfaces; prefer Common Crawl/indexers over hitting
-origins; respect robots/ToS + rate limits in active mode; redact PII; withhold
-evasion aids; a confirmed finding follows `docs/DISCLOSURE.md` (report first).
+- **Read-only.** It reads public/archived data and never writes to third-party
+  surfaces or submits transactions.
+- **Be polite.** Prefer Common Crawl/indexers over live origins; respect robots,
+  ToS, and rate limits; set a contact in `LAPIS_UA`.
+- **Handle findings with care.** Redact PII; never republish third-party data
+  wholesale; describe exploits/credentials by class, never as a working payload.
+- **Withhold evasion aids** — nothing that helps labs *hide* collusion.
+- **Report first.** A confirmed finding follows [`docs/DISCLOSURE.md`](docs/DISCLOSURE.md).
 
 ## Docs
 
-- `docs/architecture.html` — this system, in diagrams
-- `docs/nightingale.html` — the method Lapis extends
-- `docs/prior-art-and-scanner.md` — prior art + build notes
-- `RESEARCH.md` — the incident background
+- [`docs/architecture.html`](docs/architecture.html) — the system, in diagrams
+- [`docs/nightingale.html`](docs/nightingale.html) — the method Lapis extends
+- [`docs/prior-art-and-scanner.md`](docs/prior-art-and-scanner.md) — prior art + build notes
+- [`RESEARCH.md`](RESEARCH.md) — the incident background
+
+MIT licensed ([`LICENSE`](LICENSE)).

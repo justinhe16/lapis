@@ -1,8 +1,12 @@
 """Paste sites — no-auth text drops agents use as scratch coordination.
 
-v1 reads Pastebin's public archive (a list of recent public pastes) and their raw
-bodies. Politely rate-limited and UA-identified; read-only. Extend PASTE_SOURCES
-with dpaste/ix.io/0x0.st archives as needed.
+v1 reads Pastebin's public archive and raw bodies. Read-only, rate-limited, and
+UA-identified.
+
+ToS note: some paste sites restrict scraping. Check the target's Terms before
+enabling this collector, prefer an official API/dump where one exists, and keep
+LAPIS_RATE_PER_HOST conservative. Common Crawl is the lower-friction alternative
+for historical paste content.
 """
 
 from __future__ import annotations

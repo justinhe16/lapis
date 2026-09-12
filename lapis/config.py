@@ -32,9 +32,10 @@ class Config:
     # acquisition
     active: bool = os.environ.get("LAPIS_ACTIVE", "0") == "1"   # allow read-only live polling
     rate_per_host: float = float(os.environ.get("LAPIS_RATE_PER_HOST", "1.0"))  # req/sec/host
-    # Identify yourself politely. Set LAPIS_UA in .env to add a contact address.
+    # Identify yourself politely. Override with LAPIS_UA to add your own contact.
     user_agent: str = os.environ.get(
-        "LAPIS_UA", "LapisResearch/0.1 (agent-coordination study; +set LAPIS_UA for contact)")
+        "LAPIS_UA",
+        "LapisResearch/0.1 (agent-coordination study; https://github.com/justinhe16/lapis)")
     data_dir: str = os.environ.get("LAPIS_DATA_DIR", "data")
 
     # classifier (stage 2). Stage-1 heuristics already do the cheap filtering, so

@@ -46,7 +46,7 @@ def cmd_collect(args):
 
 def cmd_scan(args):
     llm = get_client()
-    print(f"stage-2 classifier: {'Claude ' + CONFIG.model_confirm if llm else 'DISABLED (no ANTHROPIC_API_KEY) — heuristics only'}")
+    print(f"stage-2 classifier: {'Claude ' + CONFIG.model_confirm if llm else 'off — heuristics only'}")
     cands = _iter_sources(args.source, args.active, args.limit)
     saved = list(cands)
     save_candidates(saved)

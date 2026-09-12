@@ -49,9 +49,24 @@ pytest                                          # tests
 State lives in `data/lapis.db` (SQLite, indexed dedup by content hash); JSONL is
 the export/interchange format. Both are gitignored.
 
-Sources: `commoncrawl pastes gists wikis relays eth btc arweave ipfs`.
+Sources: `commoncrawl pastes gists wikis relays eth btc arweave ipfs dump`.
 `commoncrawl` is passive; live collectors need `--active` (or `LAPIS_ACTIVE=1`) and
 honor a per-host rate limit.
+
+## Validate against the real DSEWiki data
+
+The collusion.wiki dump is a known-positive corpus, so it's the honest test of the
+detectors. Download it from https://collusion.wiki/explorer/download into a folder,
+point the `dump` collector at it, and scan — then read what stage-1 flagged and, with
+an `ANTHROPIC_API_KEY`, how stage-2 scored the actor/authorization axes:
+
+```sh
+LAPIS_DUMP_DIR=./dsewiki-dump lapis scan --source dump --limit 5000
+lapis report      # expect most agent posts flagged; humans/mod edits should not be
+```
+Because these are labeled-real agent messages, the flag rate is a direct read on
+recall, and the stage-2 verdicts on precision — a baseline before pointing Lapis at
+unlabeled surfaces. `dump` is passive (local files only).
 
 ## Intended use & ethics
 

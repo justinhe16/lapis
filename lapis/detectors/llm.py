@@ -119,10 +119,18 @@ class AnthropicClient:
 
 
 def get_client() -> LLMClient | None:
-    """Real client if a key is configured, else None (stage-1-only mode)."""
+    """Real client if a key is configured AND the SDK is installed, else None
+    (stage-1-only mode). A key with no `anthropic` package degrades, never crashes."""
     if not CONFIG.llm_enabled:
         return None
-    return AnthropicClient()
+    try:
+        return AnthropicClient()
+    except ImportError:
+        import sys
+        print("stage-2 requested (ANTHROPIC_API_KEY set) but the 'anthropic' package "
+              "is not installed — run: pip install 'lapis[llm]'. Falling back to stage-1 only.",
+              file=sys.stderr)
+        return None
 
 
 def confirm(candidate: Candidate, client: LLMClient) -> dict[str, Any]:

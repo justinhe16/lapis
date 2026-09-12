@@ -42,7 +42,7 @@ def _ensure_loaded() -> None:
     if _loaded:
         return
     _loaded = True
-    from . import pastes, gists, commoncrawl, wikis, relays          # noqa: F401
+    from . import pastes, gists, commoncrawl, wikis, relays, dump    # noqa: F401
     from .chains import ethereum, bitcoin, arweave, ipfs             # noqa: F401
 
 

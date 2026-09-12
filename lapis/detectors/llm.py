@@ -92,7 +92,12 @@ class AnthropicClient:
 
     def __init__(self, api_key: str | None = None, model: str | None = None):
         import anthropic  # deferred: only needed when stage-2 actually runs
-        self._client = anthropic.Anthropic(api_key=api_key or CONFIG.anthropic_key)
+        # Request uncompressed responses: some environments ship a broken httpx2
+        # whose response decompressor raises on gzip/br/zstd. Identity encoding
+        # sidesteps it; responses are small, so the size cost is negligible.
+        self._client = anthropic.Anthropic(
+            api_key=api_key or CONFIG.anthropic_key,
+            default_headers={"Accept-Encoding": "identity"})
         self._model = model or CONFIG.model_confirm
 
     def classify(self, content: str, context: dict[str, Any] | None = None) -> dict[str, Any]:

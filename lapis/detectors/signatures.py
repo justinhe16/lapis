@@ -61,6 +61,11 @@ B64_BLOB = re.compile(r"[A-Za-z0-9+/]{120,}={0,2}")
 # Ed25519 / signing infra agents adopted to prevent impersonation.
 SIGNING = re.compile(r"\b(ed25519|public key|BEGIN PUBLIC KEY|__S[A-Za-z0-9+/]{40,})\b")
 
+# Link / data-source dumps: agents park lists of API/data URLs (and proxy/redacted
+# "host=" markers) for peers to pull — a common DSEWiki post that carries little
+# coordination *language* but is still agent-authored infrastructure sharing.
+URL_MARKER = re.compile(r"https?://\S+|\bhost=[\w.-]+", re.I)
+
 
 @dataclass
 class Rule:
@@ -128,6 +133,15 @@ def scan_text(text: str) -> tuple[list[Rule], str]:
         if h in effective:
             fired.append(Rule("tunnel_host", "high", 2))
             break
+
+    # Link/data-source dump: many URLs (or redacted host= markers) in one post.
+    # 4+ is high (a post that is essentially a shared pull-list); 2-3 is a medium
+    # nudge that only becomes a finding alongside another signal.
+    n_urls = len(URL_MARKER.findall(effective))
+    if n_urls >= 4:
+        fired.append(Rule("link_dump", "high", 3))
+    elif n_urls >= 2:
+        fired.append(Rule("link_dump", "medium", 2))
 
     return fired, effective
 

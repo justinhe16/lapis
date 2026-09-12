@@ -1,0 +1,21 @@
+# secrets & local config
+.env
+*.local
+
+# runtime data — collected candidates & findings are evidence, never in git
+data/
+*.jsonl
+*.log
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# os
+.DS_Store

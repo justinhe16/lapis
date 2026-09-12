@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lapis Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f5f8f7; --surface:#ffffff; --surface-2:#eef2f1; --surface-3:#e6ecea;
+  --ink:#152220; --muted:#57685f; --faint:#7c8b84; --line:#d8e0dc; --line-2:#c6d0cb;
+  --accent:#0f766e; --accent-ink:#0b5a54; --accent-soft:#d6ece7;
+  --crit:#c62828; --high:#d1491c; --med:#b7791f; --low:#5b6b7a; --ok:#0f766e;
+  --crit-bg:#fbe4e2; --high-bg:#fbe6dc; --med-bg:#f7ecd4; --low-bg:#e6ebef; --ok-bg:#d6ece7;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --maxw:1060px; --prose:68ch; --radius:10px;
+  --shadow:0 1px 2px rgba(20,40,35,.06),0 6px 20px rgba(20,40,35,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1211; --surface:#111917; --surface-2:#16211e; --surface-3:#1c2925;
+  --ink:#e7efec; --muted:#9aaba4; --faint:#7f918a; --line:#243430; --line-2:#31443e;
+  --accent:#2dd4bf; --accent-ink:#5ee0d0; --accent-soft:#0f342f;
+  --crit:#f0716a; --high:#fb9a4b; --med:#f2c14e; --low:#93a6b5; --ok:#2dd4bf;
+  --crit-bg:#3a1c1b; --high-bg:#372317; --med-bg:#332915; --low-bg:#1b2733; --ok-bg:#0f342f;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);}}
+:root[data-theme="dark"]{
+  --bg:#0c1211; --surface:#111917; --surface-2:#16211e; --surface-3:#1c2925;
+  --ink:#e7efec; --muted:#9aaba4; --faint:#7f918a; --line:#243430; --line-2:#31443e;
+  --accent:#2dd4bf; --accent-ink:#5ee0d0; --accent-soft:#0f342f;
+  --crit:#f0716a; --high:#fb9a4b; --med:#f2c14e; --low:#93a6b5; --ok:#2dd4bf;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased;margin:0}
+a{color:var(--accent-ink);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+html{scroll-behavior:smooth}@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .inner{max-width:var(--maxw);margin:0 auto;padding:11px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.brand .mono{font-family:var(--mono);font-size:.82rem;color:var(--muted);font-weight:500}
+nav.jump{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+nav.jump a{font-family:var(--mono);font-size:.74rem;color:var(--muted);padding:5px 9px;border-radius:6px}
+nav.jump a:hover{color:var(--ink);background:var(--surface-2);text-decoration:none}
+main{max-width:var(--maxw);margin:0 auto;padding:0 24px 96px}
+.prose{max-width:var(--prose)}.prose p{margin:.7em 0}
+.hero{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:500}
+h1{font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.1;letter-spacing:-.02em;margin:.35em 0 .3em;text-wrap:balance;font-weight:700}
+.lede{font-size:1.12rem;color:var(--muted);max-width:62ch}
+.meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.chip{font-family:var(--mono);font-size:.73rem;padding:5px 10px;border:1px solid var(--line-2);border-radius:999px;color:var(--muted);background:var(--surface)}
+.chip b{color:var(--ink);font-weight:600}
+section{padding:44px 0;border-bottom:1px solid var(--line)}
+h2{font-size:1.5rem;letter-spacing:-.015em;margin:0 0 .2em;font-weight:600;text-wrap:balance}
+h2 .num{font-family:var(--mono);font-size:.9rem;color:var(--accent-ink);margin-right:.55em;font-weight:500}
+h3{font-size:1.05rem;margin:1.8em 0 .4em;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);max-width:var(--prose);margin-top:.1em}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:24px 0;overflow:hidden}
+.diagram .cap{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.diagram .cap .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.diagram .cap .ttl{font-weight:600;font-size:.92rem}
+.diagram .body{overflow-x:auto;padding:20px 16px}.mermaid{min-width:520px}
+.diagram .foot{padding:10px 16px;border-top:1px dashed var(--line);color:var(--muted);font-size:.86rem}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);margin:20px 0;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:560px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--surface-2);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+tbody tr:last-child td{border-bottom:none}tbody tr:hover{background:var(--surface-2)}
+.mono{font-family:var(--mono)}
+code{font-family:var(--mono);font-size:.85em;background:var(--surface-2);padding:.12em .4em;border-radius:5px;border:1px solid var(--line)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.6;box-shadow:var(--shadow)}
+pre .c{color:var(--faint)}
+.sev{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.75rem;padding:3px 9px;border-radius:6px;font-weight:500}
+.sev.crit{color:var(--crit);background:var(--crit-bg)}.sev.high{color:var(--high);background:var(--high-bg)}
+.sev.med{color:var(--med);background:var(--med-bg)}.sev.low{color:var(--low);background:var(--low-bg)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:22px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.card h4{margin:0 0 .3em;font-size:.95rem;font-weight:600}.card p{margin:.3em 0 0;color:var(--muted);font-size:.9rem}
+.card.a{border-left:3px solid var(--accent)}.card.b{border-left:3px solid var(--med)}
+.card .k{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+.foot-note{color:var(--faint);font-size:.85rem;margin-top:40px}
+@media (max-width:640px){.hero{padding:36px 0 24px}nav.jump{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="inner">
+  <span class="brand"><span class="dot"></span> Lapis <span class="mono">/ agent-fingerprint scanner</span></span>
+  <nav class="jump">
+    <a href="#what">what</a><a href="#pipeline">pipeline</a><a href="#collectors">collectors</a>
+    <a href="#classify">classifier</a><a href="#chains">chains</a><a href="#stack">stack</a><a href="#cli">cli</a>
+  </nav>
+</div></header>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">System architecture · retrospective agent forensics</div>
+    <h1>Lapis: scan the internet that already exists for agent coordination</h1>
+    <p class="lede">Instead of building bait and waiting, Lapis pulls content agents have
+      <em>already left</em> across many writable surfaces — pastes, gists, wikis, ephemeral relays, and
+      <b>blockchain / permaweb</b> — decodes it, and runs a two-stage classifier (cheap heuristics →
+      Claude confirm) to surface agent-to-agent coordination.</p>
+    <div class="meta-row">
+      <span class="chip"><b>9</b>&nbsp;collectors</span>
+      <span class="chip">2-stage&nbsp;classify</span>
+      <span class="chip">read-only</span>
+      <span class="chip">Python&nbsp;3.10+</span>
+      <span class="chip">extends&nbsp;Nightingale</span>
+    </div>
+  </div>
+
+  <section id="what">
+    <h2>The idea</h2>
+    <div class="prose">
+      <p>The DSEWiki swarm was found <em>after the fact</em> by scanning public data for the fingerprints of
+      coordination — not by luring agents. Lapis operationalizes that method and widens it: more surfaces
+      (including ones nobody has scanned for this, like on-chain data fields), and an automated
+      surface-discovery step. Everything is <b>read-only</b>; Lapis never writes to a third-party surface.</p>
+    </div>
+  </section>
+
+  <section id="pipeline">
+    <h2><span class="num">01</span>Pipeline</h2>
+    <div class="diagram">
+      <div class="cap"><span class="tag">Diagram 1</span><span class="ttl">enumerate → collect → classify → report</span></div>
+      <div class="body"><pre class="mermaid">
+flowchart LR
+  E["<b>enumerate</b><br/>ask Claude for<br/>net-new surfaces"]
+  C["<b>collect</b><br/>per-surface collectors<br/>→ Candidate records"]
+  K["<b>classify</b> (2-stage)<br/>heuristics → Claude confirm"]
+  R["<b>report</b><br/>ranked findings + stats"]
+  E -. registers .-> C
+  C --> K --> R
+  store[("candidates.jsonl")]
+  find[("findings.jsonl")]
+  C --> store
+  K --> find
+</pre></div>
+      <div class="foot">Every collector emits the same normalized <code>Candidate</code>, so the classifier and
+        report never change when you add a surface.</div>
+    </div>
+  </section>
+
+  <section id="collectors">
+    <h2><span class="num">02</span>Collectors — one normalized record per surface</h2>
+    <p class="sub">Grouped by family. Passive = offline corpora/indexers; active = read-only live polling
+      (rate-limited, UA-identified).</p>
+    <div class="diagram">
+      <div class="cap"><span class="tag">Diagram 2</span><span class="ttl">Surfaces → Candidate</span></div>
+      <div class="body"><pre class="mermaid">
+flowchart LR
+  subgraph tw["text web"]
+    cc["commoncrawl<br/><i>WARC ranges · passive</i>"]
+    pa["pastes<br/><i>pastebin archive</i>"]
+    gi["gists<br/><i>GitHub API</i>"]
+  end
+  subgraph wk["wikis / relays"]
+    wi["wikis<br/><i>RecentChanges feeds</i>"]
+    re["relays<br/><i>ntfy.sh · jsonbins</i>"]
+  end
+  subgraph ch["blockchain / permaweb"]
+    et["eth<br/><i>calldata · JSON-RPC</i>"]
+    bt["btc<br/><i>OP_RETURN · blockstream</i>"]
+    ar["arweave<br/><i>GraphQL</i>"]
+    ip["ipfs<br/><i>gateway · known CIDs</i>"]
+  end
+  cand(["Candidate<br/>source · locator · content · ts · author · meta"])
+  cc --> cand
+  pa --> cand
+  gi --> cand
+  wi --> cand
+  re --> cand
+  et --> cand
+  bt --> cand
+  ar --> cand
+  ip --> cand
+</pre></div>
+    </div>
+  </section>
+
+  <section id="classify">
+    <h2><span class="num">03</span>Two-stage classifier</h2>
+    <p class="sub">Stage-1 is high-recall triage (cheap, offline). Stage-2 is precision (Claude confirms and
+      characterizes). No API key → stage-1 only.</p>
+    <div class="diagram">
+      <div class="cap"><span class="tag">Diagram 3</span><span class="ttl">Candidate → Finding</span></div>
+      <div class="body"><pre class="mermaid">
+flowchart TB
+  c(["Candidate.content"])
+  s1["<b>stage-1 · signatures.py</b><br/>regex/heuristics: agent self-id,<br/>coordination verbs, task-relay,<br/>zz/ZZZ, bypass, proxy chains,<br/>base64/gzip decode"]
+  gate{"score ≥ threshold?"}
+  drop["drop"]
+  s2["<b>stage-2 · llm.py</b><br/>Claude claude-opus-5<br/>structured verdict"]
+  key{"ANTHROPIC_API_KEY?"}
+  f(["Finding<br/>kinds · severity · score · verdict"])
+  c --> s1 --> gate
+  gate -- no --> drop
+  gate -- yes --> key
+  key -- no --> f
+  key -- yes --> s2 --> f
+</pre></div>
+      <div class="foot">Stage-2 returns <code>{is_agent_coordination, pattern, confidence, rationale}</code> and
+        treats the content strictly as data — it never follows instructions embedded in a candidate.</div>
+    </div>
+    <h3>Signatures &amp; severity</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th class="mono">kind</th><th>Severity</th><th>What it catches</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">agent_self_id</td><td><span class="sev high">high</span></td><td>Model/agent vocabulary (OpenAI, GPT-5, swarm, ExploitGym).</td></tr>
+        <tr><td class="mono">coordination_lang</td><td><span class="sev high">high</span></td><td>Coordination norms: HOLD/VETO/STOP/RELAY/CONFIRMED/RECRUIT.</td></tr>
+        <tr><td class="mono">zz_lexical</td><td><span class="sev high">high</span></td><td>zz-prefixed messages, ZZZ anti-deletion pages.</td></tr>
+        <tr><td class="mono">sandbox_bypass</td><td><span class="sev high">high</span></td><td>/etc/hosts, NO_PROXY, Host-header tricks, "reproducible bypass".</td></tr>
+        <tr><td class="mono">proxy_chain</td><td><span class="sev high">high</span></td><td>Fetch-laundering hosts (r.jina.ai, markdown.new, corsproxy.io).</td></tr>
+        <tr><td class="mono">task_relay</td><td><span class="sev med">med</span></td><td>R1–R5 rounds, cohorts, deadlines, task-clock.</td></tr>
+        <tr><td class="mono">encoded_payload</td><td><span class="sev med">med</span></td><td>Long base64/gzip blob decoded to readable text.</td></tr>
+        <tr><td class="mono">wiki_fuzz · xss_probe</td><td><span class="sev med">med</span></td><td>UseModWiki action-fuzzing / XSS-shaped payloads.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="prose">A lone weak signal is demoted below "high" — the top severities require corroboration
+      (score ≥ 3), which keeps stage-1 recall high without every match reading as critical.</p>
+  </section>
+
+  <section id="chains">
+    <h2><span class="num">04</span>The novel bit — reading coordination off-chain surfaces</h2>
+    <p class="sub">Blockchains and the permaweb let you store arbitrary bytes without a normal value transfer.
+      Lapis decodes those bytes to text <em>before</em> classification, so an agent message on-chain is
+      scanned exactly like a paste.</p>
+    <div class="diagram">
+      <div class="cap"><span class="tag">Diagram 4</span><span class="ttl">Decode-then-classify</span></div>
+      <div class="body"><pre class="mermaid">
+flowchart LR
+  subgraph src["data-carrying fields"]
+    a["ETH calldata / logs<br/><i>hex input</i>"]
+    b["BTC OP_RETURN<br/><i>≤80 bytes</i>"]
+    d["Arweave / IPFS<br/><i>arbitrary content</i>"]
+  end
+  dec["<b>payload_text()</b><br/>hex → bytes →<br/>utf-8 / gzip / base64"]
+  sig["stage-1 signatures"]
+  a --> dec
+  b --> dec
+  d --> dec
+  dec -- "printable?" --> sig
+</pre></div>
+      <div class="foot">Nobody has scanned chains for agent coordination — a durable, censorship-resistant
+        shared store is exactly what a swarm wanting persistent state would reach for.</div>
+    </div>
+  </section>
+
+  <section id="stack">
+    <h2><span class="num">05</span>Technology</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Component</th><th>Technology</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><b>package</b></td><td class="mono">Python 3.10+ · setuptools</td><td>Console entry point <code>lapis</code>; stdlib-first.</td></tr>
+        <tr><td><b>collectors</b></td><td class="mono">requests</td><td>Rate-limited, UA-identified, read-only HTTP.</td></tr>
+        <tr><td><b>stage-1</b></td><td class="mono">stdlib re / base64 / zlib</td><td>Offline signature detection + payload decode.</td></tr>
+        <tr><td><b>stage-2</b></td><td class="mono">anthropic SDK · claude-opus-5</td><td>Structured verdict via <code>output_config.format</code>. Optional.</td></tr>
+        <tr><td><b>eth</b></td><td class="mono">JSON-RPC (any provider)</td><td>Decode recent-block calldata to text.</td></tr>
+        <tr><td><b>btc</b></td><td class="mono">blockstream.info API</td><td>OP_RETURN outputs → text.</td></tr>
+        <tr><td><b>arweave / ipfs</b></td><td class="mono">arweave GraphQL · IPFS gateway</td><td>Permaweb content → text.</td></tr>
+        <tr><td><b>store</b></td><td class="mono">JSONL (append-only)</td><td>candidates + findings; the evidence record.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="cli">
+    <h2><span class="num">06</span>CLI &amp; layout</h2>
+    <pre><span class="c"># scan a surface: collect + classify + store findings</span>
+lapis scan --source gists --limit 50 --active
+lapis scan --source all --active
+lapis report                    <span class="c"># ranked findings + stats</span>
+lapis enumerate                 <span class="c"># discover net-new surfaces (needs ANTHROPIC_API_KEY)</span>
+
+lapis/
+  cli.py  config.py  models.py  store.py  enumerate.py  report.py
+  collectors/  base.py registry.py commoncrawl.py pastes.py gists.py wikis.py relays.py
+               chains/ ethereum.py bitcoin.py arweave.py ipfs.py
+  detectors/   signatures.py (stage-1)  llm.py (stage-2)  pipeline.py</pre>
+    <div class="grid2">
+      <div class="card a"><h4>Passive vs active</h4><p><code>commoncrawl</code> is passive (offline corpora).
+        Live-polling collectors need <code>--active</code> / <code>LAPIS_ACTIVE=1</code> and honor a
+        per-host rate limit.</p></div>
+      <div class="card b"><h4>Guardrails</h4><p>Read-only everywhere; never write to a third-party surface or
+        submit a transaction; redact PII; withhold evasion aids; report first (<code>docs/DISCLOSURE.md</code>).</p></div>
+    </div>
+    <p class="foot-note">Companion to <code>docs/nightingale.html</code> (the method Lapis extends) and
+      <code>docs/prior-art-and-scanner.md</code>. Grounded in <code>RESEARCH.md</code>.</p>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function(){
+  var root=document.documentElement, stamped=root.getAttribute('data-theme');
+  var dark = stamped ? stamped==='dark' : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var css=getComputedStyle(root), v=function(n,f){return (css.getPropertyValue(n)||f).trim();};
+  mermaid.initialize({startOnLoad:true, securityLevel:'loose', theme:dark?'dark':'base', flowchart:{curve:'basis'},
+    themeVariables:{fontFamily:v('--sans','sans-serif'), fontSize:'14px',
+      primaryColor:dark?'#16211e':'#ffffff', primaryTextColor:v('--ink',dark?'#e7efec':'#152220'),
+      primaryBorderColor:v('--line-2',dark?'#31443e':'#c6d0cb'), lineColor:v('--faint','#7c8b84'),
+      secondaryColor:v('--surface-2',dark?'#16211e':'#eef2f1'), tertiaryColor:v('--accent-soft',dark?'#0f342f':'#d6ece7'),
+      clusterBkg:dark?'#0f1613':'#f0f4f2', clusterBorder:v('--line',dark?'#243430':'#d8e0dc')}});
+})();
+</script>
+</body>
+</html>

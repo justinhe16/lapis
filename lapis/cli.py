@@ -1,9 +1,10 @@
-"""Lapis CLI:  lapis enumerate | collect | scan | report
+"""Lapis CLI:  lapis enumerate | collect | scan | report | export
 
   enumerate                 discover net-new candidate surfaces (needs ANTHROPIC_API_KEY)
-  collect  --source S       pull candidates from surface S into the cache
+  collect  --source S       pull candidates from surface S into the store (SQLite)
   scan     --source S       collect + classify (heuristics -> Claude) + store findings
-  report                    build a findings report from findings.jsonl
+  report                    build a findings report from the store
+  export   --kind K         dump candidates/findings to JSONL
 """
 
 from __future__ import annotations
@@ -40,7 +41,7 @@ def _iter_sources(source, active, limit):
 def cmd_collect(args):
     cands = list(_iter_sources(args.source, args.active, args.limit))
     n = save_candidates(cands)
-    print(f"collected {len(cands)} candidate(s), {n} new -> {CONFIG.data_dir}/candidates.jsonl")
+    print(f"collected {len(cands)} candidate(s), {n} new -> {CONFIG.data_dir}/lapis.db (candidates)")
 
 
 def cmd_scan(args):
@@ -62,12 +63,18 @@ def cmd_scan(args):
             tag = f"{v.get('actor_type','?')}/{v.get('authorization','?')}"
         print(f"[{f.severity.upper():8}] {f.source:11} {tag:24} {', '.join(f.kinds)} :: {f.locator}")
         hits += 1
-    print(f"-- {len(saved)} scanned, {hits} finding(s) -> {CONFIG.data_dir}/findings.jsonl")
+    print(f"-- {len(saved)} scanned, {hits} finding(s) -> {CONFIG.data_dir}/lapis.db (findings)")
 
 
 def cmd_report(args):
     from .report import build
     print(build())
+
+
+def cmd_export(args):
+    from .store import export_jsonl
+    path = export_jsonl(args.kind)
+    print(f"exported {args.kind} -> {path}")
 
 
 def cmd_enumerate(args):
@@ -92,6 +99,9 @@ def main(argv=None):
     p.set_defaults(fn=cmd_scan)
 
     p = sub.add_parser("report", help="build a findings report"); p.set_defaults(fn=cmd_report)
+    p = sub.add_parser("export", help="dump a table to JSONL")
+    p.add_argument("--kind", choices=["candidates", "findings"], default="findings")
+    p.set_defaults(fn=cmd_export)
     p = sub.add_parser("enumerate", help="discover net-new surfaces"); p.set_defaults(fn=cmd_enumerate)
 
     args = ap.parse_args(argv)

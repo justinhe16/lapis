@@ -273,7 +273,7 @@ flowchart LR
         <tr><td><b>eth</b></td><td class="mono">JSON-RPC (any provider)</td><td>Decode recent-block calldata to text.</td></tr>
         <tr><td><b>btc</b></td><td class="mono">blockstream.info API</td><td>OP_RETURN outputs → text.</td></tr>
         <tr><td><b>arweave / ipfs</b></td><td class="mono">arweave GraphQL · IPFS gateway</td><td>Permaweb content → text.</td></tr>
-        <tr><td><b>store</b></td><td class="mono">JSONL (append-only)</td><td>candidates + findings; the evidence record.</td></tr>
+        <tr><td><b>store</b></td><td class="mono">SQLite (stdlib) · JSONL export</td><td>candidates + findings, keyed by content hash (indexed dedup); JSONL is the export/interchange format.</td></tr>
       </tbody>
     </table></div>
   </section>

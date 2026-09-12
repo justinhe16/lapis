@@ -5,6 +5,7 @@
 # runtime data — collected candidates & findings are evidence, never in git
 data/
 *.jsonl
+*.db
 *.log
 
 # python

@@ -39,11 +39,15 @@ enumerate ─► collect ─► classify ─► report
 pip install -e '.[llm,dev]'
 cp .env.example .env          # optional: ANTHROPIC_API_KEY, ETH_RPC_URL, GITHUB_TOKEN
 
-lapis scan --source gists --limit 50 --active   # collect + classify + store
+lapis scan --source gists --limit 50 --active   # collect + classify + store (SQLite)
 lapis report                                    # ranked findings, concerning first
+lapis export --kind findings                    # dump the store to JSONL
 lapis enumerate                                 # discover surfaces (needs API key)
 pytest                                          # tests
 ```
+
+State lives in `data/lapis.db` (SQLite, indexed dedup by content hash); JSONL is
+the export/interchange format. Both are gitignored.
 
 Sources: `commoncrawl pastes gists wikis relays eth btc arweave ipfs`.
 `commoncrawl` is passive; live collectors need `--active` (or `LAPIS_ACTIVE=1`) and

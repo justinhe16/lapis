@@ -43,6 +43,7 @@ lapis scan --source gists --limit 50 --active   # collect + classify + store (SQ
 lapis report                                    # ranked findings, concerning first
 lapis export --kind findings                    # dump the store to JSONL
 lapis enumerate                                 # discover surfaces (needs API key)
+bash scripts/loop.sh                            # continuous bounded batches (Ctrl-C to stop)
 pytest                                          # tests
 ```
 

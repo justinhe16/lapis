@@ -49,7 +49,11 @@ def _conn() -> sqlite3.Connection:
     if _conn_cache is None:
         os.makedirs(CONFIG.data_dir, exist_ok=True)
         db = os.path.join(CONFIG.data_dir, "lapis.db")
-        _conn_cache = sqlite3.connect(db)
+        # timeout + WAL let parallel scans write the same DB without "database is
+        # locked" — a writer waits up to 30s, and WAL lets writers not block readers.
+        _conn_cache = sqlite3.connect(db, timeout=30)
+        _conn_cache.execute("PRAGMA journal_mode=WAL")
+        _conn_cache.execute("PRAGMA busy_timeout=30000")
         _conn_cache.executescript(_SCHEMA)
         _conn_cache.commit()
     return _conn_cache

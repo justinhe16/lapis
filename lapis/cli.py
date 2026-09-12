@@ -49,12 +49,18 @@ def cmd_scan(args):
     cands = _iter_sources(args.source, args.active, args.limit)
     saved = list(cands)
     save_candidates(saved)
+    from .detectors.llm import is_concerning
     hits = 0
     for f in classify(saved, llm, threshold=args.threshold):
         save_finding(f)
-        v = (f.verdict or {}).get("is_agent_coordination")
-        tag = "CONFIRMED" if v is True else ("benign" if v is False else "flagged")
-        print(f"[{f.severity.upper():8}] {f.source:11} {tag:9} {', '.join(f.kinds)} :: {f.locator}")
+        v = f.verdict
+        if v is None:
+            tag = "flagged"
+        elif is_concerning(v):
+            tag = "CONCERNING"
+        else:
+            tag = f"{v.get('actor_type','?')}/{v.get('authorization','?')}"
+        print(f"[{f.severity.upper():8}] {f.source:11} {tag:24} {', '.join(f.kinds)} :: {f.locator}")
         hits += 1
     print(f"-- {len(saved)} scanned, {hits} finding(s) -> {CONFIG.data_dir}/findings.jsonl")
 

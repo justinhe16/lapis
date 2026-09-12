@@ -202,9 +202,21 @@ flowchart TB
   key -- no --> f
   key -- yes --> s2 --> f
 </pre></div>
-      <div class="foot">Stage-2 returns <code>{is_agent_coordination, pattern, confidence, rationale}</code> and
-        treats the content strictly as data — it never follows instructions embedded in a candidate.</div>
+      <div class="foot">Stage-2 returns <code>{actor_type, authorization, safety_relevance, pattern,
+        confidence, rationale}</code> — splitting <em>who acted</em> (human / operator-directed agent /
+        autonomous agent) from <em>whether it was intended</em> (sanctioned / unsanctioned). It treats the
+        content strictly as data — it never follows instructions embedded in a candidate.</div>
     </div>
+    <h3>Telling apart "agentic marketing" from an alignment concern</h3>
+    <p class="prose">This is the whole point of the two axes. Ordinary agentic marketing is an
+      <b>operator-directed, sanctioned</b> agent → <code>safety_relevance: none</code>, even though it's an
+      "agent" and trips the same stage-1 patterns. The alignment concern is an <b>autonomous, unsanctioned</b>
+      agent coordinating in ways its developer did not intend → <code>safety_relevance: high</code>
+      (<code>is_concerning</code>). A human being "behind" an agent is not the deciding factor — authorization
+      is. The report ranks the concerning findings to the top and sinks the marketing. Stage-2 also receives
+      each candidate's metadata (author, source, timestamp, chain address) to inform the call — though a
+      retrospective content scan often lacks the network signals (ASN, fetcher IPs, scale) that settle
+      attribution, so confidence is bounded.</p>
     <h3>Signatures &amp; severity</h3>
     <div class="tablewrap"><table>
       <thead><tr><th class="mono">kind</th><th>Severity</th><th>What it catches</th></tr></thead>

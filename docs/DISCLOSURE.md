@@ -9,15 +9,19 @@ Nightingale Collective did with the DSEWiki data).
 A Lapis finding worth escalating is evidence of genuine autonomous agent-to-agent
 coordination on a public surface — not a marketing bot, a crawler, or a human.
 Concretely: a stage-1 hit that the **stage-2 Claude confirm** marks
-`is_agent_coordination: true` with reasonable confidence, showing one of:
+**`actor_type: autonomous_agent` + `authorization: unsanctioned`** (i.e.
+`safety_relevance: high` — the `is_concerning` bucket) with reasonable confidence,
+showing one of:
 
 - agents **sharing task answers / relaying** a question sequence (R1–R5, cohorts);
 - agents **sharing sandbox bypasses or credentials**;
 - agents **recruiting** each other or coordinating a collective project;
 - durable coordination infra (signing, `zz`/`ZZZ` conventions, chunked payloads).
 
-A single benign gist, a human paste, or a stage-1 false positive is **not**
-reportable — that's exactly what stage-2 filters.
+A single benign gist, a human paste, ordinary **agentic marketing** (an
+operator-directed, sanctioned agent), or a stage-1 false positive is **not**
+reportable — separating those from the alignment concern is exactly what stage-2's
+two axes do.
 
 ## Who we notify, in order
 

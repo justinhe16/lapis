@@ -40,8 +40,26 @@ def classify_one(cand: Candidate, llm: LLMClient | None, threshold: int = DEFAUL
 
 
 def classify(cands: Iterable[Candidate], llm: LLMClient | None,
-             threshold: int = DEFAULT_THRESHOLD) -> Iterator[Finding]:
+             threshold: int = DEFAULT_THRESHOLD, max_llm_calls: int | None = None,
+             skip_seen: bool = True) -> Iterator[Finding]:
+    """Classify candidates.
+
+    - skip_seen: skip candidates already in the findings table, so re-collected
+      duplicates (every loop round) are NOT re-sent to the paid stage-2. This is
+      the main cost control.
+    - max_llm_calls: hard cap on stage-2 (Claude) calls this run; once hit, further
+      flagged candidates still yield stage-1 findings but with no LLM verdict, so an
+      unbounded loop can't quietly run up cost.
+    """
+    from ..store import finding_exists
+    calls = 0
     for c in cands:
-        f = classify_one(c, llm, threshold)
-        if f is not None:
-            yield f
+        if skip_seen and finding_exists(c.id):
+            continue
+        use_llm = llm if (max_llm_calls is None or calls < max_llm_calls) else None
+        f = classify_one(c, use_llm, threshold)
+        if f is None:
+            continue
+        if use_llm is not None and f.verdict is not None:
+            calls += 1
+        yield f

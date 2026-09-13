@@ -52,7 +52,8 @@ def cmd_scan(args):
     save_candidates(saved)
     from .detectors.llm import is_concerning
     hits = 0
-    for f in classify(saved, llm, threshold=args.threshold):
+    for f in classify(saved, llm, threshold=args.threshold,
+                      max_llm_calls=(args.max_llm_calls or None)):  # 0 -> unlimited
         save_finding(f)
         v = f.verdict
         if v is None:
@@ -96,6 +97,8 @@ def main(argv=None):
 
     p = sub.add_parser("scan", help="collect + classify + store findings"); _sources_arg(p)
     p.add_argument("--threshold", type=int, default=DEFAULT_THRESHOLD)
+    p.add_argument("--max-llm-calls", type=int, default=150,
+                   help="hard cap on stage-2 (paid) calls per run; 0 = unlimited (default 150)")
     p.set_defaults(fn=cmd_scan)
 
     p = sub.add_parser("report", help="build a findings report"); p.set_defaults(fn=cmd_report)

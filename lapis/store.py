@@ -101,6 +101,14 @@ def save_finding(f: Finding) -> None:
     conn.commit()
 
 
+def finding_exists(candidate_id: str) -> bool:
+    """Has this candidate already been classified? Used to avoid re-sending the
+    same content to the paid stage-2 on every loop round."""
+    return _conn().execute(
+        "SELECT 1 FROM findings WHERE candidate_id = ? LIMIT 1", (candidate_id,)
+    ).fetchone() is not None
+
+
 def load_findings() -> list[dict]:
     out: list[dict] = []
     for r in _conn().execute(

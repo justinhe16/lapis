@@ -16,7 +16,12 @@ from ..models import Candidate
 from .base import Collector, http_get
 from .registry import register
 
-NTFY_TOPICS = [t.strip() for t in os.environ.get("LAPIS_NTFY_TOPICS", "").split(",") if t.strip()]
+def _ntfy_topics() -> list[str]:
+    from ..discovered import targets
+    env = [t.strip() for t in os.environ.get("LAPIS_NTFY_TOPICS", "").split(",") if t.strip()]
+    return list(dict.fromkeys(env + targets("ntfy_topics")))
+
+
 JSONBINS = [b.strip() for b in os.environ.get("LAPIS_JSONBINS", "").split(",") if b.strip()]
 
 
@@ -26,7 +31,7 @@ class RelaysCollector(Collector):
 
     def iter_candidates(self, since=None, limit=100) -> Iterator[Candidate]:
         n = 0
-        for topic in NTFY_TOPICS:
+        for topic in _ntfy_topics():
             # ntfy caches recent messages; poll=1 returns them without holding open.
             r = http_get(f"https://ntfy.sh/{topic}/json", params={"poll": "1"})
             if r is None:

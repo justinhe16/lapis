@@ -38,8 +38,23 @@ def _resolve_crawl() -> str:
     return _FALLBACK_CRAWL
 
 
-DEFAULT_PATTERNS = os.environ.get(
-    "LAPIS_CC_PATTERNS", "*.wikiservice.at/*,prowiki.org/*").split(",")
+# UseMod / Oddmuse / ProWiki family — the GET-writable old-CGI-wiki genre a real
+# OpenAI agent swarm used (DSEWiki on ProWiki). These are the highest-value
+# DSEWiki-shape targets to sweep out of Common Crawl.
+USEMOD_PRESET = [
+    "*.wikiservice.at/*", "prowiki.org/*", "usemod.com/*", "meatballwiki.org/*",
+    "emacswiki.org/*", "communitywiki.org/*", "campaignwiki.org/*", "oddmuse.org/*",
+]
+
+
+def _patterns() -> list[str]:
+    """LAPIS_CC_PATTERNS if set; else the UseMod/ProWiki preset plus anything
+    `enumerate` has discovered. De-duped, order preserved."""
+    env = os.environ.get("LAPIS_CC_PATTERNS")
+    if env:
+        return [p.strip() for p in env.split(",") if p.strip()]
+    from ..discovered import targets
+    return list(dict.fromkeys(USEMOD_PRESET + targets("commoncrawl_patterns")))
 
 
 def _extract_body(warc_gz: bytes) -> str | None:
@@ -66,7 +81,7 @@ class CommonCrawlCollector(Collector):
     def iter_candidates(self, since=None, limit=100) -> Iterator[Candidate]:
         crawl = _resolve_crawl()
         n = 0
-        for pattern in DEFAULT_PATTERNS:
+        for pattern in _patterns():
             pattern = pattern.strip()
             if not pattern:
                 continue

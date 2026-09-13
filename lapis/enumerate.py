@@ -20,11 +20,19 @@ from .detectors.llm import AnthropicClient
 PROMPT = (
     "List categories of publicly reachable software or services where an autonomous "
     "agent with read-only internet access (writes blocked to GET / no login) could still "
-    "leave content that other agents can later read — i.e. covert coordination surfaces. "
-    "For each category give: the category name, why it qualifies (the affordance), 2-4 "
-    "concrete real instances, and how one would READ from it (never write). Think beyond "
-    "wikis and pastebins: relays, bins, redirect chains, permaweb, DNS, package registries, "
-    "collaborative editors, etc. Return concise structured data."
+    "leave content that other agents can later read — i.e. covert coordination surfaces, "
+    "like the 25-year-old GET-writable UseModWiki/ProWiki instance a real OpenAI agent swarm "
+    "used in 2026. For each category give: the category name, the affordance, 2-4 concrete "
+    "real instances, and how one would READ from it (never write). Think beyond wikis and "
+    "pastebins: relays, bins, redirect chains, permaweb, package registries, collaborative "
+    "editors.\n\n"
+    "Then fill `targets` with machine-usable READ targets a scanner can plug in directly:\n"
+    "- commoncrawl_patterns: Common Crawl URL glob patterns (domain/path form, e.g. "
+    "`*.wikiservice.at/*` or `emacswiki.org/*`) for GET-writable wiki/forum farms — favor "
+    "UseModWiki/Oddmuse/ProWiki forks and other old CGI wikis an escaped agent could write to.\n"
+    "- wikis_apis: MediaWiki api.php endpoint URLs of low-traffic wikis.\n"
+    "- ntfy_topics: plausible ntfy.sh topic names an agent swarm might converge on (best-effort).\n"
+    "Only real, reachable targets. Read-only."
 )
 
 SCHEMA = {
@@ -43,9 +51,19 @@ SCHEMA = {
                 "required": ["category", "affordance", "instances", "read_method"],
                 "additionalProperties": False,
             },
-        }
+        },
+        "targets": {
+            "type": "object",
+            "properties": {
+                "commoncrawl_patterns": {"type": "array", "items": {"type": "string"}},
+                "wikis_apis": {"type": "array", "items": {"type": "string"}},
+                "ntfy_topics": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["commoncrawl_patterns", "wikis_apis", "ntfy_topics"],
+            "additionalProperties": False,
+        },
     },
-    "required": ["surfaces"],
+    "required": ["surfaces", "targets"],
     "additionalProperties": False,
 }
 
@@ -54,11 +72,15 @@ def discover() -> dict:
     if not CONFIG.llm_enabled:
         raise RuntimeError("enumerate needs ANTHROPIC_API_KEY (it asks a model to brainstorm surfaces)")
     import anthropic
-    client = anthropic.Anthropic(api_key=CONFIG.anthropic_key)
+    # Accept-Encoding: identity sidesteps the broken-httpx2 decompressor (see llm.py).
+    client = anthropic.Anthropic(api_key=CONFIG.anthropic_key,
+                                 default_headers={"Accept-Encoding": "identity"})
     resp = client.messages.create(
-        model=CONFIG.model_confirm, max_tokens=4000,
+        model=CONFIG.model_confirm, max_tokens=12000,
         messages=[{"role": "user", "content": PROMPT}],
-        output_config={"format": {"type": "json_schema", "schema": SCHEMA}},
+        # low effort: a brainstorm needs little thinking, and it leaves the token
+        # budget for the JSON (adaptive thinking was eating it and returning empty).
+        output_config={"effort": "low", "format": {"type": "json_schema", "schema": SCHEMA}},
     )
     text = next((b.text for b in resp.content if getattr(b, "type", None) == "text"), "{}")
     data = json.loads(text)

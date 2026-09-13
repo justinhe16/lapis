@@ -16,7 +16,11 @@ from ..models import Candidate
 from .base import Collector, http_get
 from .registry import register
 
-DEFAULT_WIKIS = [w.strip() for w in os.environ.get("LAPIS_WIKIS", "").split(",") if w.strip()]
+def _wikis() -> list[str]:
+    """MediaWiki api.php endpoints from LAPIS_WIKIS plus anything enumerate found."""
+    from ..discovered import targets
+    env = [w.strip() for w in os.environ.get("LAPIS_WIKIS", "").split(",") if w.strip()]
+    return list(dict.fromkeys(env + targets("wikis_apis")))
 
 
 class WikisCollector(Collector):
@@ -25,7 +29,7 @@ class WikisCollector(Collector):
 
     def iter_candidates(self, since=None, limit=100) -> Iterator[Candidate]:
         n = 0
-        for api in DEFAULT_WIKIS:
+        for api in _wikis():
             rc = http_get(api, params={
                 "action": "query", "list": "recentchanges",
                 "rcprop": "title|user|timestamp|comment|ids",

@@ -101,13 +101,25 @@ def scan_text(text: str) -> tuple[list[Rule], str]:
     fired: list[Rule] = []
     effective = text
 
-    # If the content is largely one big base64 blob, try to decode and scan that too.
-    m = B64_BLOB.search(text)
-    if m and len(m.group(0)) > 200:
-        decoded = _decodes_to_text(m.group(0))
-        if decoded:
+    # Handle large base64 blobs. A blob that decodes to TEXT is a possible chunked
+    # payload — scan the decoded text. A blob that is BINARY (an image/file) is
+    # stripped out, because regexes matching random substrings inside base64 noise
+    # produce phantom hits (Fix: image gists were over-flagging). If the content is
+    # essentially just such a blob, `effective` becomes empty and nothing fires.
+    big = [b for b in B64_BLOB.findall(text) if len(b) > 200]
+    if big:
+        decoded_any = False
+        for b in big:
+            dec = _decodes_to_text(b)
+            if dec:
+                decoded_any = True
+                effective = effective.replace(b, "\n" + dec + "\n")
+            else:
+                effective = effective.replace(b, " ")   # binary/image: drop the noise
+        if decoded_any:
             fired.append(Rule("encoded_payload", "medium", 2))
-            effective = decoded + "\n" + text  # scan both
+        else:
+            fired.append(Rule("binary_or_image", "low", 0))  # informational, no score
 
     def hit(pat, kind, sev, w):
         if pat.search(effective):

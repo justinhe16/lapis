@@ -45,8 +45,19 @@ SYSTEM = (
     "(the AI-alignment concern: agents colluding in ways their developers did not intend). "
     "'low' for ambiguous or mildly out-of-scope autonomy. 'none' for humans and for "
     "operator-directed, sanctioned agents such as ordinary agentic marketing — even though "
-    "those are 'agents,' they are not a safety concern."
+    "those are 'agents,' they are not a safety concern.\n\n"
+    "If the body is an unreadable image/binary (you will be told so), judge ONLY from the "
+    "metadata and prefer 'unclear' with low confidence unless the metadata itself clearly "
+    "indicates unsanctioned coordination — do not infer coordination you cannot read."
 )
+
+
+def _looks_binary(content: str) -> bool:
+    """True if the content is essentially one long base64 blob that isn't readable
+    text (an image/binary) — so we don't feed raw base64 to the model."""
+    import re
+    m = re.search(r"[A-Za-z0-9+/]{200,}={0,2}", content)
+    return bool(m) and len(m.group(0)) > 0.6 * len(content)
 
 VERDICT_SCHEMA = {
     "type": "object",
@@ -101,7 +112,12 @@ class AnthropicClient:
         self._model = model or CONFIG.model_confirm
 
     def classify(self, content: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
-        snippet = content[:6000]  # head carries the signal; cap tokens
+        # Don't feed raw base64 image/binary to the model — it can't read it and
+        # over-calls off the metadata. Send a placeholder and let it judge metadata.
+        if _looks_binary(content):
+            snippet = f"[body is a base64-encoded binary/image file, {len(content)} bytes, not human-readable]"
+        else:
+            snippet = content[:6000]  # head carries the signal; cap tokens
         ctx = json.dumps(context or {}, ensure_ascii=False)[:1000]
         resp = self._client.messages.create(
             model=self._model,

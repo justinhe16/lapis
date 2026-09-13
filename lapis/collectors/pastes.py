@@ -20,8 +20,8 @@ from .registry import register
 
 ARCHIVE = "https://pastebin.com/archive"
 RAW = "https://pastebin.com/raw/{key}"
-# Pastebin archive rows link to /<8-char key>
-_KEY = re.compile(r'href="/([A-Za-z0-9]{8})"')
+# Pastebin archive rows link to /<8-char key>, now with a ?source=archive suffix.
+_KEY = re.compile(r'href="/([A-Za-z0-9]{8})(?:\?[^"]*)?"')
 
 
 class PastesCollector(Collector):
